@@ -1,3 +1,6 @@
+from sys import argv
+from typing import List
+
 import numpy as np
 
 
@@ -10,14 +13,15 @@ def sigmoid_derivative(x):
 
 
 class NeuralNetwork:
-    def __init__(self, x, y):
-        self.input = x
-        self.weights = [
-            np.random.rand(self.input.shape[1], 4),
-            np.random.rand(4, 1),
+    def __init__(self, x: List[List[int]], y: List[List[int]]):
+        print(f'len(x): {len(x)}\nlen(y): {len(y)}')
+        self.input: List[List[int]] = x
+        self.weights: List[List[List[int]]] = [
+            np.random.rand(self.input.shape[1], len(y)),
+            np.random.rand(len(y), 1),
         ]
-        self.y = y
-        self.output = np.zeros(y.shape)
+        self.y: List[List[int]] = y
+        self.output: List[int] = np.zeros(y.shape)
 
     def feedforward(self):
         self.layer1 = sigmoid(np.dot(self.input, self.weights[0]))
@@ -44,11 +48,38 @@ class NeuralNetwork:
 
 
 if __name__ == '__main__':
-    inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    results = np.array([[0], [1], [1], [0]])
+    try:
+        train_file = argv[1]
+        trains = argv[2]
+    except IndexError:
+        print(f'Usage: {argv[0]} <training file> <train iter count>')
+        exit(1)
 
-    neuro = NeuralNetwork(inputs, results)
-    for i in range(30000):
-        neuro.feedforward()
-        neuro.backprop()
+    print('Gathering data...')
+
+    inputs = []
+    outputs = []
+    with open(train_file) as f:
+        labels = f.readline().split(',')
+        print(f'Labels: {labels}')
+
+        for line in f.readlines():
+            output, *data = line.split(',')
+            inputs += [[int(data) for data in data]]
+            outputs += [output]
+
+    inputs = np.array(inputs)
+    outputs = np.array(outputs)
+
+    print('Creating NeuroNet...')
+    neuro = NeuralNetwork(inputs, outputs)
+
+    print(f'Training {trains} times...')
+    try:
+        for i in range(1500):
+            neuro.feedforward()
+            neuro.backprop()
+    except MemoryError:
+        print(f'Failed in iteration {i}')
+
     print(neuro.output)
