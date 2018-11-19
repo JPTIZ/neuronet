@@ -19,6 +19,32 @@ def make_layer(input_length: int, neurons: int):
     return weights, biases
 
 
+def h(x, thetas):
+    return thetas[0] + thetas.T @ x
+
+
+def cost(htheta, y):
+    # V1:    return np.square(htheta - y)/2
+    return (
+        -np.log(htheta) if y == 1 else
+        -np.log(1 - htheta)
+    )
+
+
+def cost_function(thetas, xs, ys, m):
+    return (
+        (1 / m) *
+        sum(
+            cost(h(x), y)
+            for x, y in zip(xs, ys)
+        )
+    )
+
+
+def update_thetas(thetas, x, y, m, alpha=1.0):
+    return thetas - (alpha / m) * x.T @ (cost(x*thetas) - y)
+
+
 class NeuralNetwork:
     def __init__(
         self,
@@ -83,10 +109,10 @@ class NeuralNetwork:
         # Compute last layer derivate of C in terms of a
         lay = len(self.layers) - 1
         dc_da = dlist(lambda *a: 0.0)
-        dc_da[len(self.layers)-1] = (
-            2 * sum(a[lay][j] - expected
-                    for j, expected in enumerate(expected_output))
-        )
+        dc_da[lay] = [
+            a_k - y
+            for a_k, y in zip(a[lay], expected_output)
+        ]
 
         # Compute derivate of C in terms of w
         # --> Meanwhile, compute derivate of C in terms of a
