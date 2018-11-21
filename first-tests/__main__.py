@@ -102,8 +102,8 @@ class NeuralNetwork:
         g = self.activate
 
         # -> All layers
-        z = dlist(lambda *x: float)
-        a = dlist(lambda *x: float)
+        z = dlist(lambda *x: None)
+        a = dlist(lambda *x: None)
         z[0] = np.array(input_row, dtype=float)
         a[0] = g(np.array(input_row, dtype=float))
         for j, (weights, bias) in enumerate(self.layers):
@@ -134,11 +134,13 @@ class NeuralNetwork:
         L = len(a) - 1
         delta = dlist(lambda *x: None)
         delta[L] = a[L] - y
+        print(f'-> Diff: {delta[L].reshape(10, 1)}')
         for l, (weights, bias) in reversed_enumerate(reversed(self.layers[1:]),
                                                      length=len(self.layers)):
             delta[l] = (weights.T @ delta[l+1]) * a[l] * (1 - a[l])
 
         for l, _ in enumerate(self.layers[:-1], start=1):
+            # TODO: VER QUE FUNÇÃO UTILIZAR PARA RETROPROPAGAÇÃO (HTHETA = G(THETA @ A) ???)
             if MSG_ME:
                 print(f'self._gradients[{l}]: {self._gradients[l].shape}')
                 print(f'delta[{l+1}]: {delta[l+1].shape}')
@@ -155,7 +157,7 @@ class NeuralNetwork:
             print('# Backpropped. Thats it, boys, we\'re done.')
             print(f'# Partial Result: {a[-1]}')
 
-    def train(self, input_row, expected_output, m):
+    def train(self, input_row, expected_output, m, lamb=10):
         '''
         HINT: A Perceptron is defined by a weights vector.
         '''
@@ -163,7 +165,7 @@ class NeuralNetwork:
         a, z = self.feedforward(input_row, expected_output)
 
         # Backpropagation
-        self.backpropagate(a, z, input_row, expected_output, m=m)
+        self.backpropagate(a, z, input_row, expected_output, m=m, lamb=lamb)
 
         self.a = a
 
@@ -239,10 +241,10 @@ def main():
         activate_diff=sigmoid_derivative,
     )
 
-    MAX_FEEDS = 10000
+    MAX_FEEDS = 60000
     for i, (pixels, label) in enumerate(training_dataset):
         print(f'# Feed {i}/{MAX_FEEDS}')
-        net.train(pixels, label, m=MAX_FEEDS)
+        net.train(pixels, label, m=MAX_FEEDS, lamb=0.00001)
         if MAX_FEEDS is not None and i == MAX_FEEDS:
             break
 
