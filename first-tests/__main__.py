@@ -5,22 +5,25 @@ import numpy as np
 from defaultlist import defaultlist as dlist
 
 
+MSG_ME = False
+
+
+AUTO_LEN = object()
+def reversed_enumerate(it, length: int = AUTO_LEN, start=0):
+    if length is AUTO_LEN:
+        length = len(it)
+    length -= start + 1
+    for v in it:
+        yield length, v
+        length -= 1
+
+
 def sigmoid(x: float) -> float:
     return 1 / (1 + np.exp(-x))
 
 
 def sigmoid_derivative(x: float) -> float:
     return x * (1 - x)
-
-
-def make_layer(input_length: int, neurons: int):
-    weights = np.random.rand(input_length, neurons) * 2 - 1
-    biases = np.random.rand(neurons) * 2 - 1
-    return weights, biases
-
-
-def h(x, thetas):
-    return thetas[0] + thetas.T @ x
 
 
 def cost(htheta, y):
@@ -31,18 +34,31 @@ def cost(htheta, y):
     )
 
 
-def cost_function(thetas, xs, ys, m):
+def cost_function(a, xs, ys, m):
     return (
-        (1 / m) *
+        (-1 / m) *
         sum(
-            cost(h(x), y)
+            cost(a, y)
             for x, y in zip(xs, ys)
         )
     )
 
 
-def update_thetas(thetas, x, y, m, alpha=1.0):
-    return thetas - (alpha / m) * x.T @ (cost(x*thetas) - y)
+def update_thetas(thetas, x, y, m, alpha=1.0, lamb=0.0):
+    return (
+        thetas - (alpha / m) * x.T @ (cost(x*thetas) - y) +
+        (lamb/m) * sum(np.square(theta) for theta in thetas[1:])
+    )
+
+
+def z(j, thetas, a):
+    return thetas[j-1] @ a[j - 1]
+
+
+def make_layer(input_length: int, neurons: int):
+    weights = np.random.rand(input_length, neurons) * 2 - 1
+    bias = np.random.rand(1) * 2 - 1
+    return weights, bias
 
 
 class NeuralNetwork:
@@ -55,127 +71,122 @@ class NeuralNetwork:
         activate,
         activate_diff,
     ):
-        first_layer = make_layer(neurons_per_layer, input_length)[0]
+        first_layer = make_layer(neurons_per_layer, input_length)
         hidden_layers = (
-            make_layer(neurons_per_layer, neurons_per_layer)[0]
+            make_layer(neurons_per_layer, neurons_per_layer)
             for _ in range(hidden_layers - 1)
         )
-        output_layer = make_layer(output_length, neurons_per_layer)[0]
+        output_layer = make_layer(output_length, neurons_per_layer)
 
         self.layers = [first_layer, *hidden_layers, output_layer]
         self.activate = activate
         self.activate_diff = activate_diff
+        self._gradients = None
+
+    def prepare_training(self):
+        # Setup
+        self.print_unecessary_disclaimer()
+
+        self._gradients = [
+            np.zeros(len(weights))
+            for weights, bias in self.layers
+        ]
 
     def feedforward(self, input_row, expected_output):
         input_layer, *hidden_layers, output_layer = self.layers
-        print('# Feed me >:) Feeding...')
+        layers = len(self.layers)
 
-        # -> Input layer
-        a = dlist(lambda *a: dlist(lambda *b: float))
-        z = dlist(lambda *a: dlist(lambda *b: float))
-        for j, weights in enumerate(input_layer):
-            z[0][j] = sum(i*weights[k]
-                          for k, i in enumerate(input_row))
-            a[0][j] = self.activate(z[0][j])
+        if MSG_ME:
+            print('# Feed me >:) Feeding...')
 
-        # -> Hidden layers
-        for l, layer in enumerate(hidden_layers, start=1):
-            for j, weights in enumerate(layer):
-                z[l][j] = sum(a*weights[k]
-                              for k, a in enumerate(a[l-1]))
-                a[l][j] = self.activate(z[l][j])
+        g = self.activate
 
-        # -> Output layer
-        lay = len(self.layers) - 1
-        for j, weights in enumerate(output_layer):
-            z[lay][j] = sum(a*weights[k]
-                            for k, a in enumerate(a[lay-1]))
-            a[lay][j] = self.activate(z[lay][j])
+        # -> All layers
+        z = dlist(lambda *x: float)
+        a = dlist(lambda *x: float)
+        z[0] = np.array(input_row, dtype=float)
+        a[0] = g(np.array(input_row, dtype=float))
+        for j, (weights, bias) in enumerate(self.layers):
+            z[j+1] = weights @ a[j]
+            a[j+1] = g(z[j+1])
 
-        print('# I has been fed ^w^')
+        z, a = np.array(z), np.array([*a])
+
+        if MSG_ME:
+            print('# I has been fed ^w^')
         return a, z
 
-    def backpropagate(self, a, z, expected_output):
-        print('# Backpropping...')
+    def backpropagate(self, a, z, x, y, m=1, lamb=10):
+        if MSG_ME:
+            print('# Backpropping...')
 
-        input_layer, *hidden_layers, output_layer = self.layers
+        if self._gradients is None:
+            print('# Oops, no gradients! Preparing for training...')
+            self.prepare_training()
 
-        # -> C(o)
-        error = sum(np.square(result - expected)
-                    for result, expected in zip(a[-1], expected_output))
-        print(f'> general error: {error}')
+        last_layer = cost_function(
+            a=a[-1],
+            xs=[x],
+            ys=y,
+            m=m,
+        )
 
-        # TODO: Keep going with the backprop, bro :)
-        # Compute last layer derivate of C in terms of a
-        lay = len(self.layers) - 1
-        dc_da = dlist(lambda *a: 0.0)
-        dc_da[lay] = [
-            a_k - y
-            for a_k, y in zip(a[lay], expected_output)
-        ]
+        L = len(a) - 1
+        delta = dlist(lambda *x: None)
+        delta[L] = a[L] - y
+        for l, (weights, bias) in reversed_enumerate(reversed(self.layers[1:]),
+                                                     length=len(self.layers)):
+            delta[l] = (weights.T @ delta[l+1]) * a[l] * (1 - a[l])
 
-        # Compute derivate of C in terms of w
-        # --> Meanwhile, compute derivate of C in terms of a
-        dc_dw = dlist(lambda *a: dlist(lambda *b: dlist(lambda *c: 0.0)))
-        for _l, layer in enumerate(reversed(self.layers[:-1]), start=2):
-            lay = len(self.layers) - _l
-            print(f'working on layer {lay}/{len(self.layers)-1}')
-            print(f'  |-> nodes: {len(self.layers[lay])}')
-            print(f'  |-> weights/node: {len(self.layers[lay][0])}')
-            print(f'  `-> activations: {len(a[lay])}')
-            for j, weights in enumerate(layer):
-                for k, w in enumerate(weights):
-                    if lay != len(self.layers) - 1:
-                        _theta = self.layers[lay+1][k]
-                        zeta = z[lay]
-                        s = sum(
-                            theta *
-                            self.activate_diff(zeta[j]) *
-                            dc_da[lay+1]
-                            for _j, theta in enumerate(_theta)
-                        )
-                        dc_da[lay] = s
-                    dc_dw[lay][j][k] = (
-                        a[lay-1][k]
-                        * self.activate_diff(z[lay][j])
-                        * dc_da[lay]
-                    )
+        for l, _ in enumerate(self.layers[:-1], start=1):
+            if MSG_ME:
+                print(f'self._gradients[{l}]: {self._gradients[l].shape}')
+                print(f'delta[{l+1}]: {delta[l+1].shape}')
+                print(f'a[{l}].T: {a[l].T.shape}')
+            self._gradients[l] = self._gradients[l] + delta[l+1] @ a[l].T
 
-        # Update weights
-        for l, layer in enumerate(hidden_layers):
-            for j, weights in enumerate(layer):
-                for k, w in enumerate(weights):
-                    weights[j][k] = weights[j][k] - dc_dw[l][j][k]
+        for l, (weights, bias) in enumerate(self.layers[1:], start=1):
+            self.layers[l] = (
+                weights - (1/m) * (self._gradients[l] + lamb * weights),
+                bias - (1/m) * (self._gradients[l])
+            )
 
-    def train(self, input_row, expected_output):
+        if MSG_ME:
+            print('# Backpropped. Thats it, boys, we\'re done.')
+            print(f'# Partial Result: {a[-1]}')
+
+    def train(self, input_row, expected_output, m):
         '''
         HINT: A Perceptron is defined by a weights vector.
         '''
-        # Setup
-        input_layer, *hidden_layers, output_layer = self.layers
-
-        print(f'''
-              .{"-"*55}.
-              | Training the following neural network:               {' '* 0} |
-              | - Layers: {len(self.layers)}                         {' '*17} |
-              |    `-> Hidden: {len(hidden_layers):<3}               {' '*20} |
-              | - Neurons in:                                        {' '* 0} |
-              |    |-> Input  Layer: {len(input_layer):<3}           {' '*18} |
-              |    |-> Hidden Layer: {len(hidden_layers[0]):<3}      {' '*23} |
-              |    `-> Output Layer: {len(output_layer):<3}          {' '*19} |
-              | - Weights for each neuron in:                        {' '* 0} |
-              |    |-> Input  Layer: {len(input_layer[0]):<3}        {' '*21} |
-              |    |-> Hidden Layer: {len(hidden_layers[0][0]):<3}   {' '*26} |
-              |    `-> Output Layer: {len(output_layer[0]):<3}       {' '*22} |
-              `{"-"*55}'
-              '''
-              )
-
         # Feed forward
         a, z = self.feedforward(input_row, expected_output)
 
         # Backpropagation
-        self.backpropagate(a, z, expected_output)
+        self.backpropagate(a, z, input_row, expected_output, m=m)
+
+        self.a = a
+
+    def print_unecessary_disclaimer(self):
+        input_layer, *hidden_layers, output_layer = self.layers
+
+        if MSG_ME:
+            print(f'''
+                  .{"-"*55}.
+                  | Training the following neural network:               {' '* 0} |
+                  | - Layers: {len(self.layers)}                         {' '*17} |
+                  |    `-> Hidden: {len(hidden_layers):<3}               {' '*20} |
+                  | - Neurons in:                                        {' '* 0} |
+                  |    |-> Input  Layer: {len(input_layer):<3}           {' '*18} |
+                  |    |-> Hidden Layer: {len(hidden_layers[0]):<3}      {' '*23} |
+                  |    `-> Output Layer: {len(output_layer):<3}          {' '*19} |
+                  | - Weights for each neuron in:                        {' '* 0} |
+                  |    |-> Input  Layer: {len(input_layer[0]):<3}        {' '*21} |
+                  |    |-> Hidden Layer: {len(hidden_layers[0][0]):<3}   {' '*26} |
+                  |    `-> Output Layer: {len(output_layer[0]):<3}       {' '*22} |
+                  `{"-"*55}'
+                  '''
+                  )
 
 
 def read_dataset(csv_path: str):
@@ -228,8 +239,14 @@ def main():
         activate_diff=sigmoid_derivative,
     )
 
-    for pixels, label in training_dataset:
-        net.train(pixels, label)
+    MAX_FEEDS = 10000
+    for i, (pixels, label) in enumerate(training_dataset):
+        print(f'# Feed {i}/{MAX_FEEDS}')
+        net.train(pixels, label, m=MAX_FEEDS)
+        if MAX_FEEDS is not None and i == MAX_FEEDS:
+            break
+
+    print(f'Final a[L]:\n {net.a[-1].reshape(10, 1)}')
 
 
 if __name__ == '__main__':
