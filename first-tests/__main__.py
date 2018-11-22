@@ -1,85 +1,96 @@
 from sys import argv
-from typing import List
-
+import csv
 import numpy as np
+import os
+
+from sklearn.neural_network import MLPClassifier
+from sklearn.externals import joblib
 
 
-def sigmoid(x):
-    return 1.0/(1 + np.exp(-x))
+def read_dataset(csv_path: str):
+    with open(csv_path) as f:
+        reader = csv.reader(f)
+        next(reader)  # skip header
+
+        for label, *pixels in reader:
+            pixels = np.array(pixels).astype(np.float) / 255
+            # normalized to [0, 1]
+
+            output = np.zeros(10)
+            output[int(label)] = 1
+
+            yield pixels, output
 
 
-def sigmoid_derivative(x):
-    return x * (1.0 - x)
+# TODO: separar em subcomandos: `train` e `test`.
+def cli():
+    usage = (
+        f'Usage: {argv[0]} '
+        '<training-dataset> '
+        '<hidden-layers> '
+        '<neurons-per-layer>'
+        '<test-dataset> '
+    )
+
+    if '-h' in argv or '--help' in argv:
+        print(usage)
+        exit(0)
+
+    try:
+        (_,
+            training_dataset,
+            hidden_layers,
+            neurons_per_layer,
+            test_dataset) = argv
+        hidden_layers = int(hidden_layers)
+        neurons_per_layer = int(neurons_per_layer)
+    except (ValueError, TypeError):
+        print(usage)
+        exit(1)
+
+    return (
+        read_dataset(training_dataset),
+        hidden_layers,
+        neurons_per_layer,
+        read_dataset(test_dataset),
+    )
 
 
-class NeuralNetwork:
-    def __init__(self, x: List[List[int]], y: List[List[int]]):
-        print(f'len(x): {len(x)}\nlen(y): {len(y)}')
-        self.input: List[List[int]] = x
-        self.weights: List[List[List[int]]] = [
-            np.random.rand(self.input.shape[1], len(y)),
-            np.random.rand(len(y), 1),
-        ]
-        self.y: List[List[int]] = y
-        self.output: List[int] = np.zeros(y.shape)
+def main():
+    training_dataset, hidden_layers, neurons_per_layer, test_dataset = cli()
+    TRAINED_FILE = 'trained.net'
 
-    def feedforward(self):
-        self.layer1 = sigmoid(np.dot(self.input, self.weights[0]))
-        self.output = sigmoid(np.dot(self.layer1, self.weights[1]))
+    if os.path.exists(TRAINED_FILE):
+        print('Using previously trained NN.')
+        net = joblib.load(TRAINED_FILE)
+    else:
+        print('Creating new NN.')
+        net = MLPClassifier(
+            solver='lbfgs',
+            alpha=1e-5,
+            hidden_layer_sizes=(10, 10),
+            random_state=1,
+        )
 
-    def backprop(self):
-        d_weights = [
-            np.dot(
-                self.input.T,
-                (np.dot(
-                    2*(self.y - self.output) * sigmoid_derivative(self.output),
-                    self.weights[1].T
-                ) * sigmoid_derivative(self.layer1))
-            ),
-            np.dot(
-                self.layer1.T,
-                (2*(self.y - self.output) * sigmoid_derivative(self.output))
-            ),
-        ]
+        X, Y = zip(*training_dataset)
+        print('Fitting...', end='')
+        net.fit(X, Y)
 
-        self.weights = [
-            w + d_w for w, d_w in zip(self.weights, d_weights)
-        ]
+        print('Done.\nSaving...', end='')
+        joblib.dump(net, TRAINED_FILE)
+        print('Done.')
+
+    print('Testing...', end='')
+
+    right, total = 0, 0
+    for (w, o) in test_dataset:
+        r = net.predict([w])
+        if (r == o).all():
+            right += 1
+        total += 1
+
+    print(f'Done.\nAccurracy: {right}/{total} ({100*right/total:3.2f}%)')
 
 
 if __name__ == '__main__':
-    try:
-        train_file = argv[1]
-        trains = argv[2]
-    except IndexError:
-        print(f'Usage: {argv[0]} <training file> <train iter count>')
-        exit(1)
-
-    print('Gathering data...')
-
-    inputs = []
-    outputs = []
-    with open(train_file) as f:
-        labels = f.readline().split(',')
-        print(f'Labels: {labels}')
-
-        for line in f.readlines():
-            output, *data = line.split(',')
-            inputs += [[int(data) for data in data]]
-            outputs += [output]
-
-    inputs = np.array(inputs)
-    outputs = np.array(outputs)
-
-    print('Creating NeuroNet...')
-    neuro = NeuralNetwork(inputs, outputs)
-
-    print(f'Training {trains} times...')
-    try:
-        for i in range(1500):
-            neuro.feedforward()
-            neuro.backprop()
-    except MemoryError:
-        print(f'Failed in iteration {i}')
-
-    print(neuro.output)
+    main()
