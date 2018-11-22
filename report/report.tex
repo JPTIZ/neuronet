@@ -1,0 +1,100 @@
+%-------------------------------------------------------------------------------
+\documentclass[twocolumn]{article}
+
+%-------------------------------------------------------------------------------
+% Packages
+\usepackage[portuguese]{babel}
+\usepackage{environ}
+\usepackage[margin=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{minted}
+\usepackage{xcolor}
+
+%-------------------------------------------------------------------------------
+% User-commands
+\newcommand{\todo}[1]{{\color{red}{#1}}}
+
+\NewEnviron{superframe}{%
+    \begin{center}
+        \fbox{\setlength{\fboxsep}{1em}\fbox{\parbox{5.5in}{%
+            \BODY{}
+        }}}
+    \end{center}
+}
+
+\newmintedfile[textfile]{text}{autogobble, breaklines}
+
+%-------------------------------------------------------------------------------
+% Project configs
+\title{Relatório de I.A.: Redes Neurais (Trabalho 5)}
+\author{Cauê Baasch de Souza \\
+        João Paulo Taylor Ienczak Zanette}
+\date{\today}
+
+%-------------------------------------------------------------------------------
+\begin{document}
+    \maketitle{}
+
+    \section{Resumo do projeto}
+
+    \begin{description}
+        \item [Linguagem:] Python 3.7
+        \item [Biblioteca de Redes Neurais utilizada:] sklearn~\cite{sklearn}.
+    \end{description}
+
+    \section{Configuração dos experimentos}
+
+    Os experimentos foram realizados tomando como base dois conjuntos de dados
+    já disponibilizados pelo professor na plataforma Moodle, sendo um para
+    treinamento da rede neural e outro para testes. Ambos os conjuntos são
+    formados por tuplas no formato $(output, pixel_1, pixel_2, \ldots,
+    pixel_n)$, em que $output$ é um número simbolizando a categoria esperada
+    para a análise do conjunto de pixeis denotados por $pixel_{i}$.
+
+    O tratamento da rede neural foi separado em duas etapas: uma de
+    treinamento, enviando à rede todas as tuplas do conjunto de treinamento em
+    um grande lote, e outra para testes enviando as tuplas do conjunto de
+    testes e, para cada teste, validando se a previsão da rede foi feita
+    corretamente ou não.
+
+    \section{Normalização dos Dados}
+
+    A gente normalizou os dados.
+
+    \section{Separação dos conjuntos de treinamento e teste}
+
+    A gente separou os conjuntos de treinamento e teste.
+
+    \section{Arquitetura de rede}
+
+    A gente usou uma arquitetura de rede.
+
+    \section{Quantos e quais experimentos foram feitos até chegar no resultado final}
+
+    Vários (mentira, foram só uns 2 depois que funcionou com a lib).
+
+    \section{Como foi o treinamento}
+
+    Foi bem divertido, obrigado.
+
+    \section{Qual a taxa de acertos da rede}
+
+    66\% eu acho, por aí.
+
+    \section{Matriz de confusão}
+
+    Que.
+
+    \section{Exemplos de objetos que foram mal-classificados pela rede}
+
+    *Sigh* isso vai dar um trabalho\ldots
+
+    \section{Fatos que você achou interessante}
+
+    Implementar backtracking é um belo cu mas foi legal.
+
+    \bibliographystyle{unsrt}
+    \bibliography{refs}
+    \nocite{*}
+\end{document}

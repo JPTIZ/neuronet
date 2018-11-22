@@ -22,6 +22,7 @@ def read_dataset(csv_path: str):
             yield pixels, output
 
 
+# TODO: separar em subcomandos: `train` e `test`.
 def cli():
     usage = (
         f'Usage: {argv[0]} '
