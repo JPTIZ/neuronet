@@ -1,4 +1,7 @@
+from textwrap import dedent
 from sys import argv
+from pathlib import Path
+
 import csv
 import numpy as np
 import os
@@ -22,63 +25,67 @@ def read_dataset(csv_path: str):
             yield pixels, output
 
 
-# TODO: separar em subcomandos: `train` e `test`.
-def cli():
-    usage = (
-        f'Usage: {argv[0]} '
-        '<training-dataset> '
-        '<hidden-layers> '
-        '<neurons-per-layer>'
-        '<test-dataset> '
-    )
+def main():
+    usage = dedent(f'''
+    Usage:
+        {argv[0]} train <layer-sizes>... <training-dataset> <output-network>
+        {argv[0]} test <trained-network> <test-dataset>
+    '''.strip())
 
     if '-h' in argv or '--help' in argv:
         print(usage)
-        exit(0)
 
-    try:
-        (_,
-            training_dataset,
-            hidden_layers,
-            neurons_per_layer,
-            test_dataset) = argv
-        hidden_layers = int(hidden_layers)
-        neurons_per_layer = int(neurons_per_layer)
-    except (ValueError, TypeError):
+    elif argv[1] == 'train':
+        try:
+            _, _, *ls, td, on = argv
+            layer_sizes = [int(l) for l in ls]
+            training_dataset = read_dataset(td)
+            output_network = Path(on)
+        except (ValueError, TypeError):
+            print(usage)
+            exit(1)
+        else:
+            train(
+                layer_sizes,
+                training_dataset,
+                output_network
+            )
+
+    elif argv[1] == 'test':
+        try:
+            _, _, tn, td = argv
+            trained_network = Path(tn)
+            test_dataset = read_dataset(td)
+        except (ValueError, TypeError):
+            print(usage)
+            exit(1)
+        else:
+            test(trained_network, test_dataset)
+
+    else:
         print(usage)
         exit(1)
 
-    return (
-        read_dataset(training_dataset),
-        hidden_layers,
-        neurons_per_layer,
-        read_dataset(test_dataset),
+
+def train(layer_sizes, training_dataset, output_network):
+    print('Creating new NN.')
+    net = MLPClassifier(
+        solver='lbfgs',
+        alpha=1e-5,
+        hidden_layer_sizes=layer_sizes,
+        random_state=1,
     )
 
+    X, Y = zip(*training_dataset)
+    print('Fitting...', end='')
+    net.fit(X, Y)
 
-def main():
-    training_dataset, hidden_layers, neurons_per_layer, test_dataset = cli()
-    TRAINED_FILE = 'trained.net'
+    print('Done.\nSaving...', end='')
+    joblib.dump(net, output_network)
 
-    if os.path.exists(TRAINED_FILE):
-        print('Using previously trained NN.')
-        net = joblib.load(TRAINED_FILE)
-    else:
-        print('Creating new NN.')
-        net = MLPClassifier(
-            solver='lbfgs',
-            alpha=1e-5,
-            hidden_layer_sizes=(10, 10),
-            random_state=1,
-        )
 
-        X, Y = zip(*training_dataset)
-        print('Fitting...', end='')
-        net.fit(X, Y)
-
-        print('Done.\nSaving...', end='')
-        joblib.dump(net, TRAINED_FILE)
-        print('Done.')
+def test(trained_network, test_dataset):
+    net = joblib.load(trained_network)
 
     print('Testing...', end='')
 
