@@ -2,12 +2,12 @@ from textwrap import dedent
 from sys import argv
 from pathlib import Path
 
-import csv
-import numpy as np
-import os
-
 from sklearn.neural_network import MLPClassifier
 from sklearn.externals import joblib
+
+from PIL import Image
+import csv
+import numpy as np
 
 
 def read_dataset(csv_path: str):
@@ -25,11 +25,25 @@ def read_dataset(csv_path: str):
             yield pixels, output
 
 
+def export_dataset(csv_path: str, img_path: str):
+    output_dir = Path(img_path)
+    if not output_dir.exists():
+        output_dir.mkdir()
+
+    for i, (pixels, output) in enumerate(read_dataset(csv_path)):
+        img = Image.new('L', (28, 28))
+        for j, pixel in enumerate(pixels * 255):
+            xy = j % 28, j // 28
+            img.putpixel(xy, int(pixel))
+        img.save(f'{img_path}/img-{i:04}.bmp')
+
+
 def main():
     usage = dedent(f'''
     Usage:
         {argv[0]} train <layer-sizes>... <training-dataset> <output-network>
         {argv[0]} test <trained-network> <test-dataset>
+        {argv[0]} export-images <dataset> <output-dir>
     '''.strip())
 
     if '-h' in argv or '--help' in argv:
@@ -61,6 +75,15 @@ def main():
             exit(1)
         else:
             test(trained_network, test_dataset)
+
+    elif argv[1] == 'export-images':
+        try:
+            _, _, dataset, output_dir = argv
+        except (ValueError, TypeError):
+            print(usage)
+            exit(1)
+        else:
+            export_dataset(dataset, output_dir)
 
     else:
         print(usage)
