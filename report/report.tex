@@ -4,11 +4,13 @@
 %-------------------------------------------------------------------------------
 % Packages
 \usepackage[portuguese]{babel}
-\usepackage{environ}
 \usepackage[margin=2cm]{geometry}
+
+\usepackage{environ}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{minted}
+\usepackage{tikz}
 \usepackage{xcolor}
 
 %-------------------------------------------------------------------------------
@@ -24,6 +26,9 @@
 }
 
 \newmintedfile[textfile]{text}{autogobble, breaklines}
+
+\newcommand{\hiddenlayers}{1, 2}
+\newcommand{\hiddenneurons}{10, 50, 100}
 
 %-------------------------------------------------------------------------------
 % Project configs
@@ -56,41 +61,48 @@
     treinamento, enviando à rede todas as tuplas do conjunto de treinamento em
     um grande lote, e outra para testes enviando as tuplas do conjunto de
     testes e, para cada teste, validando se a previsão da rede foi feita
-    corretamente ou não.
+    corretamente ou não. Em ambas as etapas, todos os pixeis foram normalizados
+    para o intervalo $[0, 1]$ por uma divisão simples
+    (Equação~\ref{norm-pixel}).
 
-    \section{Normalização dos Dados}
+    \begin{equation}
+        \label{norm-pixel}
+        NormPixel_i = \frac{Pixel_i}{255}
+    \end{equation}
 
-    A gente normalizou os dados.
+    A arquitetura da rede neural é formada por: uma camada de entrada com
+    número de neurônios dependente do tamanho da entrada; um conjunto camadas
+    intermediárias variando entre $\{\hiddenlayers{}\}$, cada uma com número de
+    neurônios variando entre $\{\hiddenneurons{}\}$; e uma camada de saída com
+    10 neurônios (um para cada classificação possível).
 
-    \section{Separação dos conjuntos de treinamento e teste}
+    Quanto ao número de execuções, foi feito um treinamento e teste para cada
+    configuração possível dentre o número de camadas intermediárias e o número
+    de neurônios, totalizando 12 testes.
 
-    A gente separou os conjuntos de treinamento e teste.
-
-    \section{Arquitetura de rede}
-
-    A gente usou uma arquitetura de rede.
-
-    \section{Quantos e quais experimentos foram feitos até chegar no resultado final}
+    \subsection{Quantos e quais experimentos foram feitos até chegar no resultado final}
 
     Vários (mentira, foram só uns 2 depois que funcionou com a lib).
 
-    \section{Como foi o treinamento}
+    \subsection{Como foi o treinamento}
 
     Foi bem divertido, obrigado.
 
-    \section{Qual a taxa de acertos da rede}
+    \section{Resultados obtidos}
+
+    \subsection{Qual a taxa de acertos da rede}
 
     66\% eu acho, por aí.
 
-    \section{Matriz de confusão}
+    \subsection{Matriz de confusão}
 
     Que.
 
-    \section{Exemplos de objetos que foram mal-classificados pela rede}
+    \subsection{Exemplos de objetos que foram mal-classificados pela rede}
 
     *Sigh* isso vai dar um trabalho\ldots
 
-    \section{Fatos que você achou interessante}
+    \subsection{Fatos que você achou interessante}
 
     Implementar backtracking é um belo cu mas foi legal.
 
