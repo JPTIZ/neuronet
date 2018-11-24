@@ -46,10 +46,16 @@ def main():
         {argv[0]} export-images <dataset> <output-dir>
     '''.strip())
 
+    try:
+        command = argv[1]
+    except IndexError:
+        print(usage)
+        exit(1)
+
     if '-h' in argv or '--help' in argv:
         print(usage)
 
-    elif argv[1] == 'train':
+    elif command == 'train':
         try:
             _, _, *ls, td, on = argv
             layer_sizes = [int(l) for l in ls]
@@ -65,7 +71,7 @@ def main():
                 output_network
             )
 
-    elif argv[1] == 'test':
+    elif command == 'test':
         try:
             _, _, tn, td = argv
             trained_network = Path(tn)
@@ -76,7 +82,7 @@ def main():
         else:
             test(trained_network, test_dataset)
 
-    elif argv[1] == 'export-images':
+    elif command == 'export-images':
         try:
             _, _, dataset, output_dir = argv
         except (ValueError, TypeError):
