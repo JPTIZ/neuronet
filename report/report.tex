@@ -91,6 +91,11 @@
 
     \section{Resultados obtidos}
 
+    No melhor dos casos, a rede obteve uma taxa de acertos total de 83\% para 2
+    camadas de 100 neurônios cada. Na Tabela~\ref{conf-matrix} está expressa a
+    matriz de confusão, em que se destacam <Coisa mais acertada> e <Coisa menos
+    acertada> como classes com respectivamente maior e menor taxa de acerto.
+
     \subsection{Qual a taxa de acertos da rede}
 
     66\% eu acho, por aí.
@@ -103,7 +108,7 @@
             \toprule
             \multicolumn{11}{c}{Classe real} \\
             \midrule
-            \parbox[t]{2mm}{\multirow{3}{*}{\rotatebox[origin=c]{90}{rota}}} \\
+            % \parbox[t]{2mm}{\multirow{3}{*}{\rotatebox[origin=c]{90}{rota}}} \\
             {} & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
             0  & \\
             1  & \\
@@ -117,7 +122,8 @@
             9  & \\
             \bottomrule
         \end{tabular}
-        \caption{\label{}}
+        \caption{Matriz de confusão para uma rede neural de 2 camadas de 100
+        neurônios cada.\label{conf-matrix}}
     \end{table}
 
     \subsection{Exemplos de objetos que foram mal-classificados pela rede}
