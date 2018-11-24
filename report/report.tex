@@ -11,6 +11,7 @@
 \usepackage{hyperref}
 \usepackage{minted}
 \usepackage{tikz}
+\usepackage{booktabs}
 \usepackage{xcolor}
 
 %-------------------------------------------------------------------------------
@@ -96,7 +97,28 @@
 
     \subsection{Matriz de confusão}
 
-    Que.
+    \begin{table}
+        \centering
+        \begin{tabular}{cccccccccccc}
+            \toprule
+            \multicolumn{11}{c}{Classe real} \\
+            \midrule
+            \parbox[t]{2mm}{\multirow{3}{*}{\rotatebox[origin=c]{90}{rota}}} \\
+            {} & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+            0  & \\
+            1  & \\
+            2  & \\
+            3  & \\
+            4  & \\
+            5  & \\
+            6  & \\
+            7  & \\
+            8  & \\
+            9  & \\
+            \bottomrule
+        \end{tabular}
+        \caption{\label{}}
+    \end{table}
 
     \subsection{Exemplos de objetos que foram mal-classificados pela rede}
 
