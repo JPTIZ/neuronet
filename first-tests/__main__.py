@@ -1,12 +1,13 @@
 from textwrap import dedent
 from sys import argv
 from pathlib import Path
+import csv
 
 from sklearn.neural_network import MLPClassifier
 from sklearn.externals import joblib
 
 from PIL import Image
-import csv
+
 import numpy as np
 
 

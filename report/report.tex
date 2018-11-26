@@ -14,6 +14,8 @@
 \usepackage{booktabs}
 \usepackage{xcolor}
 
+\graphicspath{{img/}}
+
 %-------------------------------------------------------------------------------
 % User-commands
 \newcommand{\todo}[1]{{\color{red}{#1}}}
@@ -29,7 +31,7 @@
 \newmintedfile[textfile]{text}{autogobble, breaklines}
 
 \newcommand{\hiddenlayers}{1, 2}
-\newcommand{\hiddenneurons}{10, 50, 100}
+\newcommand{\hiddenneurons}{10, 100, 200}
 
 %-------------------------------------------------------------------------------
 % Project configs
@@ -46,7 +48,16 @@
 
     \begin{description}
         \item [Linguagem:] Python 3.7
-        \item [Biblioteca de Redes Neurais utilizada:] sklearn~\cite{sklearn}.
+        \item [Bibliotecas:] Foram utilizadas:
+
+
+            \begin{itemize}
+                \item sklearn~\cite{sklearn} para modelagem das Redes Neurais;
+                \item pillow~\cite{pillow} para conversão das entradas CSV em
+                    imagens para este relatório;
+                \item numpy~\cite{numpy} para representação matricial das
+                    entradas.
+            \end{itemize}
     \end{description}
 
     \section{Configuração dos experimentos}
@@ -75,64 +86,98 @@
     número de neurônios dependente do tamanho da entrada; um conjunto camadas
     intermediárias variando entre $\{\hiddenlayers{}\}$, cada uma com número de
     neurônios variando entre $\{\hiddenneurons{}\}$; e uma camada de saída com
-    10 neurônios (um para cada classificação possível).
+    10 neurônios (um para cada classificação possível). A Tabela~\ref{configs}
+    enumera as diferentes configurações de redes neurais para os experimentos.
+
+    \begin{table}
+        \begin{tabular}{c c c}
+            \toprule
+            Configuração & Nº de camadas & Nº de neurônios \\
+            \midrule
+            1  & 1 & (10) \\
+            2  & 2 & (10, 10) \\
+            3  & 2 & (10, 100) \\
+            4  & 1 & (10) \\
+            5  & 1 & (100) \\
+            6  & 1 & (200) \\
+            7  & 2 & (100, 10) \\
+            8  & 2 & (100, 100) \\
+            9  & 2 & (200, 100) \\
+            10 & 2 & (200, 200) \\
+            \bottomrule
+        \end{tabular}
+        \caption{%
+            Enumeração das configurações de rede neural utilizadas nos
+            experimentos.\label{configs}
+        }
+    \end{table}
 
     Quanto ao número de execuções, foi feito um treinamento e teste para cada
     configuração possível dentre o número de camadas intermediárias e o número
     de neurônios, totalizando 12 testes.
 
-    \subsection{Quantos e quais experimentos foram feitos até chegar no resultado final}
-
-    Vários (mentira, foram só uns 2 depois que funcionou com a lib).
-
-    \subsection{Como foi o treinamento}
-
-    Foi bem divertido, obrigado.
-
     \section{Resultados obtidos}
 
-    No melhor dos casos, a rede obteve uma taxa de acertos total de 83\% para 2
-    camadas de 100 neurônios cada. Na Tabela~\ref{conf-matrix} está expressa a
-    matriz de confusão, em que se destacam <Coisa mais acertada> e <Coisa menos
-    acertada> como classes com respectivamente maior e menor taxa de acerto.
+    A acurácia das diferentes configurações está expressa na
+    Figura~\ref{accuracy}. No melhor dos casos, a rede obteve uma acurácia de
+    cerca de 88\% para 2 camadas de 200 e 100 neurônios respectivamente, e no
+    pior caso 78.2\% para 1 camada de 10 neurônios.
 
-    \subsection{Qual a taxa de acertos da rede}
+    \begin{figure}[ht]
+        \centering{}
+        \def\svgwidth{\columnwidth}
+        \input{img/accuracy.pdf_tex}
+        \caption{%
+            Acurácia da rede neural em diferentes
+            configurações.\label{accuracy}
+        }
+    \end{figure}
 
-    66\% eu acho, por aí.
-
-    \subsection{Matriz de confusão}
+    Na Figura~\ref{conf-matrix} está expressa a matriz de confusão para a
+    configuração 9 quando avaliada para os casos de teste. Para referência, a
+    Tabela~\ref{label-nums} contém a enumeração das categorias. Considerando
+    quando eram a categoria real, descatam-se Trouser e Shirt como categorias
+    com respectivamente maior (98.4\%) e menor acurácia (73.3\%), e Shirt e
+    Trouser como categorias de, respectivamente, maior (255) e menor (18)
+    número de falsos positivos.  Destaca-se também um fator interessante: em
+    246 dos 10000 casos de teste (totalizando 2.46\%), a rede não foi capaz de
+    indicar categoria alguma, o que compõe 21.54\% das previsões erradas.
 
     \begin{table}
         \centering
-        \begin{tabular}{cccccccccccc}
+        \begin{tabular}{c l}
             \toprule
-            \multicolumn{11}{c}{Classe real} \\
+            Nº & Categoria \\
             \midrule
-            % \parbox[t]{2mm}{\multirow{3}{*}{\rotatebox[origin=c]{90}{rota}}} \\
-            {} & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
-            0  & \\
-            1  & \\
-            2  & \\
-            3  & \\
-            4  & \\
-            5  & \\
-            6  & \\
-            7  & \\
-            8  & \\
-            9  & \\
+            0 & T-shirt/top \\
+            1 & Trouser \\
+            2 & Pullover \\
+            3 & Dress \\
+            4 & Coat \\
+            5 & Sandal \\
+            6 & Shirt \\
+            7 & Sneaker \\
+            8 & Bag \\
+            9 & Ankle boot \\
             \bottomrule
         \end{tabular}
+        \caption{%
+            Relação entre números das categorias e suas respectivas
+            descrições.\label{label-nums}
+        }
+    \end{table}
+
+    \begin{figure}
+        \centering{}
+        \def\svgwidth{\columnwidth}
+        \input{img/confusion.pdf_tex}
         \caption{Matriz de confusão para uma rede neural de 2 camadas de 100
         neurônios cada.\label{conf-matrix}}
-    \end{table}
+    \end{figure}
 
     \subsection{Exemplos de objetos que foram mal-classificados pela rede}
 
     *Sigh* isso vai dar um trabalho\ldots
-
-    \subsection{Fatos que você achou interessante}
-
-    Implementar backtracking é um belo cu mas foi legal.
 
     \bibliographystyle{unsrt}
     \bibliography{refs}
