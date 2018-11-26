@@ -60,6 +60,7 @@
             \end{itemize}
     \end{description}
 
+    %===========================================================================
     \section{Configuração dos experimentos}
 
     Os experimentos foram realizados tomando como base dois conjuntos de dados
@@ -72,7 +73,7 @@
     O tratamento da rede neural foi separado em duas etapas: uma de
     treinamento, enviando à rede todas as tuplas do conjunto de treinamento em
     um grande lote, e outra para testes enviando as tuplas do conjunto de
-    testes e, para cada teste, validando se a previsão da rede foi feita
+    testes e, para cada uma, verificou-se se a previsão da rede foi feita
     corretamente ou não. Em ambas as etapas, todos os pixeis foram normalizados
     para o intervalo $[0, 1]$ por uma divisão simples
     (Equação~\ref{norm-pixel}).
@@ -83,13 +84,14 @@
     \end{equation}
 
     A arquitetura da rede neural é formada por: uma camada de entrada com
-    número de neurônios dependente do tamanho da entrada; um conjunto camadas
-    intermediárias variando entre $\{\hiddenlayers{}\}$, cada uma com número de
-    neurônios variando entre $\{\hiddenneurons{}\}$; e uma camada de saída com
-    10 neurônios (um para cada classificação possível). A Tabela~\ref{configs}
-    enumera as diferentes configurações de redes neurais para os experimentos.
+    número de neurônios dependente do tamanho da entrada; um conjunto de
+    camadas intermediárias com número de camadas variando entre
+    $\{\hiddenlayers{}\}$, cada uma com número de neurônios variando entre
+    $\{\hiddenneurons{}\}$; e uma camada de saída com 10 neurônios (um para
+    cada classificação possível). A Tabela~\ref{configs} enumera as diferentes
+    configurações de redes neurais para os experimentos.
 
-    \begin{table}
+    \begin{table}[ht]
         \begin{tabular}{c c c}
             \toprule
             Configuração & Nº de camadas & Nº de neurônios \\
@@ -112,38 +114,45 @@
         }
     \end{table}
 
-    Quanto ao número de execuções, foi feito um treinamento e teste para cada
-    configuração possível dentre o número de camadas intermediárias e o número
-    de neurônios, totalizando 12 testes.
+    Quanto ao número de execuções, para fins de avaliação dos resultados foi
+    feito um treinamento e teste para cada configuração descrita na
+    Tabela~\ref{configs}, totalizando 10 execuções.
 
+    %===========================================================================
     \section{Resultados obtidos}
+
+    %---------------------------------------------------------------------------
+    \subsection{Análise geral}
 
     A acurácia das diferentes configurações está expressa na
     Figura~\ref{accuracy}. No melhor dos casos, a rede obteve uma acurácia de
-    cerca de 88\% para 2 camadas de 200 e 100 neurônios respectivamente, e no
-    pior caso 78.2\% para 1 camada de 10 neurônios.
+    cerca de 88\% para a configuração 9 (2 camadas de 200 e 100 neurônios
+    respectivamente), e no pior caso 78.2\% para 1 camada de 10 neurônios.
 
     \begin{figure}[ht]
         \centering{}
         \def\svgwidth{\columnwidth}
         \input{img/accuracy.pdf_tex}
         \caption{%
-            Acurácia da rede neural em diferentes
-            configurações.\label{accuracy}
+            Acurácia da rede neural em diferentes configurações, dada pelo
+            número de acertos dividido pelo número de entradas no conjunto de
+            teste.\label{accuracy}
         }
     \end{figure}
 
     Na Figura~\ref{conf-matrix} está expressa a matriz de confusão para a
-    configuração 9 quando avaliada para os casos de teste. Para referência, a
-    Tabela~\ref{label-nums} contém a enumeração das categorias. Considerando
-    quando eram a categoria real, descatam-se Trouser e Shirt como categorias
-    com respectivamente maior (98.4\%) e menor acurácia (73.3\%), e Shirt e
-    Trouser como categorias de, respectivamente, maior (255) e menor (18)
-    número de falsos positivos.  Destaca-se também um fator interessante: em
+    configuração 9 quando avaliada para o conjunto de dados de teste. Para
+    referência, a Tabela~\ref{label-nums} contém a enumeração das categorias.
+    Considerando quando eram a categoria real, descatam-se Trouser e Shirt como
+    categorias com respectivamente maior (98.4\%) e menor acurácia (73.3\%), e
+    Shirt e Trouser como categorias de, respectivamente, maior (255) e menor
+    (18) número de falsos positivos.
+
+    Um fator interessante pode ser observado na exposição dos resultados: em
     246 dos 10000 casos de teste (totalizando 2.46\%), a rede não foi capaz de
     indicar categoria alguma, o que compõe 21.54\% das previsões erradas.
 
-    \begin{table}
+    \begin{table}[ht]
         \centering
         \begin{tabular}{c l}
             \toprule
@@ -167,13 +176,42 @@
         }
     \end{table}
 
-    \begin{figure}
+    \begin{figure}[ht]
         \centering{}
         \def\svgwidth{\columnwidth}
         \input{img/confusion.pdf_tex}
-        \caption{Matriz de confusão para uma rede neural de 2 camadas de 100
-        neurônios cada.\label{conf-matrix}}
+        \caption{%
+            Matriz de confusão para uma rede neural de 2 camadas de 100
+            neurônios cada.\label{conf-matrix}
+        }
     \end{figure}
+
+    %---------------------------------------------------------------------------
+    \subsection{Análise de Overfitting}
+
+    Para perceber o efeito de \textit{Overfitting} (quando a rede neural acaba
+    por descrever os dados de treinamento em vez de descrever o comportamento
+    do problema), foi analisada a acurácia das configurações 1 e 9 para os
+    dados de treinamento e teste, expressa na Figura~\ref{overfitting}.
+
+    \begin{figure}[ht]
+        \centering{}
+        \def\svgwidth{\columnwidth}
+        \input{img/overfitting.pdf_tex}
+        \caption{%
+            Acurácia das configurações 1 e 9 para os dados de treinamento e
+            teste, demonstrando o efeito de Overfitting.\label{overfitting}
+        }
+    \end{figure}
+
+    Observando o gráfico, é possível verificar que, apesar da acurácia para o
+    conjunto de treinamento ter tido um aumento absoluto de 17\% em relação às
+    configurações 1 e 9 (15.5\% de aumento relativo), o aumento absoluto para o
+    conjunto de dados de teste foi de apenas 6\% (aumento relativo de 6.8\%).
+    Analisando as configurações separadamente, a configuração 1 teve um
+    decrécimo de acurácia de cerca de apenas 3\% ao se passar do conjunto de
+    treinamento para o conjunto de teste, enquanto na configuração 9 esse
+    decréscimo foi de cerca de 10\%.
 
     \subsection{Exemplos de objetos que foram mal-classificados pela rede}
 
