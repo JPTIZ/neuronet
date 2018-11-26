@@ -120,10 +120,17 @@ def test(trained_network, test_dataset):
     print('Testing...', end='')
 
     right, total = 0, 0
-    for (w, o) in test_dataset:
+    for i, (w, o) in enumerate(test_dataset):
         r = net.predict([w])
         if (r == o).all():
             right += 1
+        else:
+            c1, c2 = , 6
+            r = r[0]
+            if np.isclose(o[c1], 1.0) and r[c2] == 1.0:
+                print(f'Wrong! {i} -> {c1} was predicted as {c2}.')
+            if np.isclose(o[c2], 1.0) and r[c1] == 1.0:
+                print(f'Wrong! {i} -> {c2} was predicted as {c1}.')
         total += 1
 
     print(f'Done.\nAccurracy: {right}/{total} ({100*right/total:3.2f}%)')

@@ -176,6 +176,34 @@
         }
     \end{table}
 
+    É importante apontar o motivo do número alto de falsos positivos de Shirt:
+    dos 255 falsos positivos para essa categoria, 114 ocorreram quando a
+    categoria real era T-Shirt. Assim, é possível perceber que a rede possui
+    dificuldades de separar quando a imagem se trata de um ou de outro por
+    conta de sua semelhança, que é notável no comparativo feito na
+    Figura~\ref{shirt-compare}.
+
+    \begin{figure}[h!]
+        \centering{}
+        \includegraphics[keepaspectratio,width=.4\columnwidth]{img/inputs/img-2570}
+        \includegraphics[keepaspectratio,width=.4\columnwidth]{img/inputs/img-2611}
+        \caption{%
+            Comparativo entre uma das imagens da categoria T-Shirt dada pela
+            rede neural como Shirt (esquerda) e uma das imagens da categoria
+            Shirt dada como T-Shirt (direita). É possível perceber a semelhança
+            das duas imagens quanto ao posicionamento e tamanho das mangas e
+            seu formato.\label{shirt-compare}
+        }
+    \end{figure}
+
+    Retomando a matriz de confusão, é possível notar que há uma correlação de
+    que, dadas duas categorias distintas A e B, quando muitos objetos da
+    categoria A são previstos como da categoria B, então provavelmente muitos
+    objetos da categoria B também serão previstos como da categoria A. Essa
+    correlação permite entender os falsos positivos da rede neural e concluir
+    que há características muito semelhantes entre as categorias, fazendo com
+    que a matriz de confusão se torne próxima de uma matriz simétrica.
+
     \begin{figure}[ht]
         \centering{}
         \def\svgwidth{\columnwidth}
@@ -212,10 +240,6 @@
     decrécimo de acurácia de cerca de apenas 3\% ao se passar do conjunto de
     treinamento para o conjunto de teste, enquanto na configuração 9 esse
     decréscimo foi de cerca de 10\%.
-
-    \subsection{Exemplos de objetos que foram mal-classificados pela rede}
-
-    *Sigh* isso vai dar um trabalho\ldots
 
     \bibliographystyle{unsrt}
     \bibliography{refs}
